@@ -1,0 +1,59 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[english,russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+%\usepackage{pscyr}
+\usepackage{graphicx}
+%\usepackage{amstext}
+%\usepackage{amssymb}
+%\usepackage{lscape}
+\usepackage{verbatim}
+% \newcommand{\No}{\textnumero}
+
+
+
+% PDF search & cut'n'paste
+\usepackage{cmap}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{color}
+\usepackage{textcomp}
+\usepackage[colorlinks]{hyperref}
+\lstset{
+	language=C,
+	tabsize=4,
+	breaklines=true,
+	basicstyle=\footnotesize,
+	identifierstyle=\ttfamily,
+	extendedchars=true,
+}
+\setcounter{tocdepth}{2}
+\renewcommand{\rmdefault}{ftm}
+% \renewcommand{Оглавление}
+\linespread{1.3} %1.5 межстрочный интервал
+\usepackage[left=3cm,right=2.5cm,top=3cm,bottom=3cm,bindingoffset=0cm]{geometry}
+
+
+
+\begin{document}
+
+\input{title.tex}
+\input{intro.tex}
+% \vbox{
+%     \centering
+%     \includegraphics[width=476]{titil.pdf}
+%     % \maketitle %this typesets the contents of \title, \author and \date
+% }
+\clearpage
+% \begin{figure}
+%  \centering 
+%  \includegraphics{titil.pdf}
+% % \end{figure}
+% \input{titul.tex}
+\input{part1.tex}
+
+\input{conclusion.tex}
+
+\end{document}
