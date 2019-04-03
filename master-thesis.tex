@@ -1,4 +1,4 @@
-\documentclass[a4paper,12pt]{article}
+\documentclass[a4paper,12pt]{report}
 
 \usepackage[T2A]{fontenc}
 \usepackage[english,russian]{babel}
@@ -51,6 +51,24 @@
 	identifierstyle=\ttfamily,
 	extendedchars=true,
 }
+
+
+\lstnewenvironment{C_LANG}[1][]{
+    \lstset{
+      belowcaptionskip=1\baselineskip,
+      breaklines=true,
+      frame=L,
+      xleftmargin=\parindent,
+      language=C,
+      showstringspaces=false,
+      basicstyle=\footnotesize\ttfamily,
+      keywordstyle=\bfseries\color{green!40!black},
+      commentstyle=\itshape\color{purple!40!black},
+      identifierstyle=\color{blue},
+      stringstyle=\color{orange},
+    \lstdefinestyle{nonumbers}
+    {numbers=none}
+}{}
 
 
 \lstnewenvironment{cpp_code}[1][]{
@@ -144,6 +162,7 @@
 
 
 % \input{title.tex}
+\input{abstract.tex}
 \tableofcontents
 \input{intro.tex}
 % \input{report.tex}
