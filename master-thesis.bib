@@ -52,6 +52,14 @@
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 
+@article{angr,
+  title={Firmalice - Automatic Detection of Authentication Bypass Vulnerabilities in Binary Firmware},
+  author={Shoshitaishvili, Yan and Wang, Ruoyu and Hauser, Christophe and Kruegel, Christopher and Vigna, Giovanni},
+  booktitle={NDSS},
+  year={2015}
+}
+
+
 @techreport{Cavallaro07anti-taint-analysis:practical,
     author = {Lorenzo Cavallaro and Prateek Saxena and R. Sekar},
     title = {Anti-taint-analysis: Practical evasion techniques against information flow based malware defense},
@@ -136,7 +144,7 @@
   publisher = {{USENIX} Association},
 }
 
-@article{SurveySymExec-CSUR18,
+@article{SurveySymExec,
   author    = {Baldoni, Roberto and Coppa, Emilio and D'Elia, Daniele Cono and Demetrescu, Camil and Finocchi, Irene},
   title     = {A Survey of Symbolic Execution Techniques},
   journal   = {ACM Comput. Surv.},
@@ -148,28 +156,29 @@
   year = {2018}
 }
 
-@article{gdb,
-	key = {1},
-	title = {GDB online documentation},
-	note={\url{https://www.gnu.org/software/gdb/}}
+@inproceedings{Schwartz,
+ author = {Schwartz, Edward J. and Avgerinos, Thanassis and Brumley, David},
+ title = {All You Ever Wanted to Know About Dynamic Taint Analysis and Forward Symbolic Execution (but Might Have Been Afraid to Ask)},
+ booktitle = {Proceedings of the 2010 IEEE Symposium on Security and Privacy},
+ series = {SP '10},
+ year = {2010},
+ isbn = {978-0-7695-4035-1},
+ pages = {317--331},
+ numpages = {15},
+ url = {http://dx.doi.org/10.1109/SP.2010.26},
+ doi = {10.1109/SP.2010.26},
+ acmid = {1849981},
+ publisher = {IEEE Computer Society},
+ address = {Washington, DC, USA},
+ keywords = {taint analysis, symbolic execution, dynamic analysis},
 }
 
-@article{smtlib,
-	key = {2},
-	title = {SMTLIB online documentation},
-	note={\url{http://smtlib.cs.uiowa.edu}}
-}
 
-@article{symgdb,
-	key = {3},
-	title = {symgdb git repository},
-	note={\url{https://github.com/SQLab/symgdb}}
-}
-
-@article{pimp,
-	key = {4},
-	title = {pipm git repository},
-	note={\url{https://github.com/kamou/pimp}}
+@mics{Taintgrind,
+	title = {Taintgrind git repository},
+  urldate = {2019-05-01},
+  url= {https://github.com/wmkhoo/taintgrind},
+	note={\url{https://github.com/wmkhoo/taintgrind}}
 }
 
 @article{yusmt,
@@ -180,10 +189,15 @@ execution},
 	note={\url{https://yurichev.com/writings/SAT_SMT_by_example.pdf}}
 }
 
-@article{Triton,
-    key = {5},
-    title = {Triton offical site},
-    note={\url{https://triton.quarkslab.com}}
+@proceedings{Triton,
+  author    = {Florent Saudel and Jonathan Salwan},
+  title     = {Triton: A Dynamic Symbolic Execution Framework},
+  booktitle = {Symposium sur la s{\'{e}}curit{\'{e}} des technologies de
+               l'information et des communications, SSTIC, France, Rennes,
+               June 3-5 2015},
+  publisher = {SSTIC},
+  pages     = {31--54},
+  year      = {2015},
 }
 
 @article{Z3,
