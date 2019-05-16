@@ -1,0 +1,349 @@
+\appendix
+\chapter{Программный код решения на основе \texttt{Angr}}
+% the \\ insures the chapter title is centered below the phrase: AppendixA
+
+\begin{lstlisting}
+#!/usr/bin/env python3
+
+import sys
+import argparse
+from pprint import pprint
+from collections import (
+    OrderedDict,
+    defaultdict,
+    namedtuple,
+)
+from itertools import (
+    takewhile,
+    chain,
+)
+from functools import reduce
+
+from helpers import (
+    show_info,
+    BinaryInfo,
+    show_rip,
+)
+
+import claripy
+import angr
+import r2pipe
+
+from networkx.algorithms import (
+    all_shortest_paths,
+)
+
+
+SIZE = 20
+
+Interval = namedtuple('Interval', ['start', 'end', 'size'])
+BufferInfo = namedtuple('BufferInfo', ['data', 'size'])
+
+
+def tainted_dict(constraints):
+
+    def merge(args):
+        new = defaultdict(set)
+        for k in set(chain(*(a.keys() for a in args))):
+            for arg in args:
+                if k in arg:
+                   new[k] |= arg[k]
+
+        return new
+
+    if isinstance(constraints, list):
+        return merge(
+            [tainted_dict(c) for c in constraints]
+        )
+
+    bv_info = namedtuple('bv_info', ['name', 'size'])
+
+    def bits2bytes(bitset_buffer: BufferInfo):
+        return reduce(
+            lambda acc, bit: (
+                acc | { bitset_buffer.size // 8 - (bit // 8) - 1 }
+            ),
+            bitset_buffer.data,
+            set()
+        )
+
+    def parse_name(name):
+        data = name.split('_')
+        size = data[-1]
+        original = data[:-2]
+        return bv_info('_'.join(original), int(size))
+
+    def operate(node):
+        if node.op == 'Extract':
+            start, end, parent = node.args
+            start, end = sorted((start, end))
+            parent_info = parse_name(parent.args[0])
+            return parent_info.name, (start, end, parent_info.size)
+        elif node.op == 'BVS':
+            vector_info = parse_name(node.args[0])
+            return vector_info.name, (0, vector_info.size - 1, vector_info.size)
+
+    def get_leafs(ast, buff=None):
+
+        def is_leaf(node):
+            return node.op == 'BVS' and isinstance(node.args[0], str)
+
+        if buff is None:
+            buff = set()
+
+        if isinstance(ast, claripy.ast.base.Base):
+
+            if ast.depth == 2 and ast.op == 'Extract':
+                buff.add(ast)
+                return
+            elif ast.depth == 1 and ast.op == 'BVS':
+                buff.add(ast)
+                return
+            elif is_leaf(ast):
+                return
+
+            for a in ast.args:
+                get_leafs(a, buff=buff)
+
+        return buff
+
+    tainted_intervals = defaultdict(set)
+    for node in get_leafs(constraints):
+        name, data = operate(node)
+        tainted_intervals[name].add(
+            Interval(*data)
+        )
+
+    return {
+        k: bits2bytes(
+            reduce(
+                lambda acc, val: BufferInfo(
+                    acc.data | set(range(val.start, val.end + 1)),
+                    val.size
+                ),
+                tainted_intervals[k],
+                BufferInfo(set(), 0)
+            )
+        ) for k in tainted_intervals
+    }
+
+
+class Explorer(object):
+
+    def __init__(self, binary, **options):
+        super(Explorer, self).__init__()
+        self.binary = binary
+        self.project = angr.Project(
+            binary.path,
+            **options
+        )
+        if self.project.loader.main_object.pic:
+            print('Binary has position indepenent code!')
+            self.offset = self.project.loader.main_object.mapped_base
+            self.binary.update_on_offset(self.offset)
+        else:
+            self.offset = 0
+        self.argv = None
+        self.entry = None
+        self.sm = None
+        self.cfg = None
+        self.trace = []
+
+    def build_cfg(self):
+        self.cfg = self.project.analyses.CFG()
+
+    def init_entry(self, **options):
+        self.entry = self.project.factory.full_init_state(
+            args=self.argv,
+            **options
+        )
+        self.sm = self.project.factory.simgr(self.entry)
+
+    def add_symbolic_file(self, name, size):
+        content = claripy.BVS(
+            name,
+            size * 8
+        )
+        sym_file = angr.storage.file.SimFile(name, content)
+        self.entry.fs.insert(
+            name,
+            sym_file
+        )
+
+    def symbolize_argv(self, size):
+        sym = claripy.BVS(
+            'argv_0',
+            size * 8
+        )
+        self.argv = [self.binary.path, sym]
+
+    def enable_trace(self):
+
+        def store(state):
+            self.trace.append(state.copy())
+
+        self.entry.inspect.b(
+            'irsb',
+            when=angr.BP_BEFORE,
+            action=store
+        )
+
+    def add_breakpoint(self, btype, action):
+        self.entry.inspect.b(
+            btype,
+            when=angr.BP_BEFORE,
+            action=action
+        )
+
+    def search_for(self, addr):
+        self.sm.explore(find=addr)
+        # try:
+        return self.sm.found[0]
+        # except:
+        #     import ipdb
+        #     ipdb.set_trace()
+
+    def get_constraints(self, state):
+        return state.solver.constraints
+
+    def tainted_bytes(self, state):
+        return tainted_dict(state.solver.constraints)
+
+    def tainted_trace(self, state):
+        for action in reversed(
+            [a for a in state.history.actions if a.type == 'constraint']
+        ):
+            print('------------------------------')
+            print(f'Basic block addr: {hex(action.bbl_addr)}')
+            print(f'Instruction addr: {hex(action.ins_addr)}')
+            print(f'Formula: {action.constraint.ast}')
+            print(f'Tainted bytes: {tainted_dict(action.constraint.ast)}\n\n')
+
+    def view_file(self, state, name):
+        sym_file = state.fs.get(name)
+        if sym_file is None:
+            raise KeyError(f'Symbolic file with name {name} not exists')
+        data, actual_size, new_pos = sym_file.read(0, SIZE)
+        # import ipdb
+        # ipdb.set_trace()
+        print(data)
+        print(state.solver.eval(data, cast_to=bytes))
+
+    def get_function_node(self, name):
+        return self.cfg.get_node(self.binary.func_map[name][0])
+
+    def shortest_path_list(self, source, sink):
+        return list(
+            all_shortest_paths(
+                self.cfg.graph,
+                self.get_function_node(source),
+                self.get_function_node(sink)
+            )
+        )
+
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Get tainted bytes for branches'
+    )
+
+    parser.add_argument(
+        'binary',
+        type=str,
+        help='binary to analyse'
+    )
+    parser.add_argument(
+        'func',
+        type=str,
+        help='function or adress to search'
+    )
+    parser.add_argument(
+        '-s',
+        '--symbolic_argv',
+        action='store_true',
+        help='symbolize argv if set'
+    )
+    parser.add_argument(
+        '-S',
+        '--file-size',
+        default=SIZE,
+        help='Size of symbolic files'
+    )
+    parser.add_argument(
+        '-f',
+        '--files',
+        default=[],
+        nargs='+',
+        help='list of files to symbolize',
+    )
+    parser.add_argument(
+        'args',
+        nargs='*',
+        default=None,
+        help='argv for program to analyse',
+    )
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    options = parse_args()
+
+    e = Explorer(
+        BinaryInfo(options.binary),
+        load_options={'auto_load_libs': True}
+    )
+
+    if options.symbolic_argv:
+        e.symbolize_argv(SIZE)
+    elif options.args:
+        e.argv = [e.binary.path, *options.args]
+
+    e.init_entry(
+        # add_options={
+        #     'SYMBOLIC_INITIAL_VALUES',
+        # }
+    )
+
+    # e.add_breakpoint('irsb', show_rip)
+
+    # e.build_cfg()
+
+    # import networkx as nx
+    # from networkx import graph
+    # import matplotlib.pyplot as plt
+
+    # nx.draw(e.cfg.graph)
+    # plt.show()
+
+    # sys.exit(0)
+    # import ipdb
+    # ipdb.set_trace()
+
+    # pprint([(x.name, hex(x.addr)) for x in e.cfg.kb.functions])
+
+    file_size = int(options.file_size)
+    for file in options.files:
+        print(f'[+] Add symbolic file of size {file_size}')
+        e.add_symbolic_file(file, file_size)
+    if options.func.startswith('0x'):
+        addr = int(options.func, base=16) + e.offset
+    else:
+        addr = e.binary.func_map[options.func][0]
+
+    print(f'Search for {hex(addr)}')
+    state = e.search_for(
+        addr
+    )
+    pprint(e.get_constraints(state))
+    x = e.tainted_bytes(state)
+
+    print('------------')
+    pprint(x)
+    print('=====Trace=========')
+    e.tainted_trace(state)
+    print('===files====')
+    for f in options.files:
+        e.view_file(state, f)
+
+\end{lstlisting}
