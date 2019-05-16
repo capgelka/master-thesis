@@ -3,7 +3,7 @@ PDFLATEX=pdflatex -interaction=nonstopmode
 DATE=$(shell date +%Y-%m-%d)
 
 master-thesis = master-thesis
-PARTS = intro.tex part1.tex conclusion.tex title.tex
+PARTS = intro.tex chapter1.tex conclusion.tex title.tex
 
 $(master-thesis).pdf:$(master-thesis).tex bib $(PARTS)
 	$(PDFLATEX) $(master-thesis).tex && evince $(master-thesis).pdf || evince $(master-thesis).pdf
