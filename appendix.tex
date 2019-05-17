@@ -1,8 +1,9 @@
 \appendix
 \chapter{Программный код решения на основе \texttt{Angr}}
+\label{angrimpl}
 % the \\ insures the chapter title is centered below the phrase: AppendixA
 
-\begin{lstlisting}
+\begin{lstlisting}[environoment=py_code, caption=an, captionpos=b]
 #!/usr/bin/env python3
 
 import sys
@@ -350,3 +351,254 @@ if __name__ == '__main__':
 
 
 \chapter{Программный код реализации \texttt{Множества пометок}}
+\label{tagsetimpl}
+
+\begin{lstlisting}[environoment=сpp_code, caption=tags.h, captionpos=b]
+#ifndef PROJECT_TAGS_H
+#define PROJECT_TAGS_H
+
+#include <map>
+#include <bitset>
+
+#define MIXED_TAINT 0xFFFFFFFF
+#define NOTAINT 0
+
+#define CHUNK_SIZE 256
+
+
+typedef std::bitset<CHUNK_SIZE> bitmap;
+typedef std::map<uint32_t, bitmap> tag_storage;
+
+class tag_set {
+public:
+    explicit tag_set() : storage_() {};
+    explicit tag_set(uint32_t tag);
+    ~tag_set() = default;
+    tag_set& operator|=(const tag_set& ts);
+    void insert(uint32_t tag);
+    friend std::ostream& operator<<(std::ostream &strm, const tag_set& ts);
+
+    
+private:
+    tag_storage storage_;
+};
+
+
+class taint_tag {
+
+public:
+    friend std::ostream& operator<<(std::ostream &strm, const taint_tag& tag);
+    friend taint_tag operator|(taint_tag left_tag, const taint_tag& tag);
+    taint_tag& operator|=(const taint_tag& tag);
+    explicit taint_tag();
+    explicit taint_tag(uint32_t);
+    taint_tag(const taint_tag& tag);
+    ~taint_tag();
+    taint_tag(taint_tag && tag);
+    taint_tag& operator=(taint_tag && other);
+    taint_tag& operator=(const taint_tag & other);
+    uint32_t get_value() const;
+    size_t size() const;
+    bool empty() const;
+
+    static uint64_t op_count;
+
+private:
+    tag_set* data_;
+    uint32_t value_;
+};
+\end{lstlisting}
+
+\begin{lstlisting}[environoment=сpp_code, caption=tags.cpp, captionpos=b]
+#include <iostream>
+#include <fstream>
+
+#include "tags.h"
+
+
+tag_set::tag_set(uint32_t tag) {
+    std::div_t tag_info = std::div(tag, CHUNK_SIZE);
+    this->storage_ = tag_storage();
+    bitmap chunk_ptr = bitmap();
+    chunk_ptr.set(tag_info.rem);
+    this->storage_.emplace(std::make_pair(tag_info.quot, chunk_ptr));
+}
+
+
+void tag_set::insert(uint32_t tag) {
+    std::div_t tag_info = std::div(tag, CHUNK_SIZE);
+    bitmap chunk = bitmap();
+    chunk.set(tag_info.rem);
+    this->storage_[tag_info.quot] |= chunk;
+}
+
+tag_set& tag_set::operator|=(const tag_set& ts) {
+    for (auto it = ts.storage_.begin(); it != ts.storage_.end(); ++it) {
+        this->storage_[it->first] |= it->second;
+    }
+    return *this;
+}
+
+std::ostream & operator<<(std::ostream &strm, const tag_set& ts) {
+    strm << "{";
+    int k = 0;
+    for (auto it = ts.storage_.begin(); it != ts.storage_.end(); ++it) {
+        for (int j = 0; j < CHUNK_SIZE; ++j) {
+            if (it->second.test(j)) {
+                if (k) {
+                    strm << ",";
+                }
+                strm << j + it->first * CHUNK_SIZE;
+                k++;
+            }
+        }
+    }
+    strm << "}";
+    return strm;
+}
+
+
+taint_tag::taint_tag() {
+    this->value_ = NOTAINT;
+    this->data_ = nullptr;
+}
+
+
+taint_tag::taint_tag(const taint_tag &tag) {
+    if (tag.value_ == MIXED_TAINT) {
+        this->value_ = MIXED_TAINT;
+        this->data_ = new tag_set();
+        *this->data_ |= *tag.data_;
+    }
+    else {
+        this->value_ = tag.value_;
+        this->data_ = nullptr;
+    }
+}
+
+taint_tag::taint_tag(taint_tag && tag) {
+    if (tag.value_ == MIXED_TAINT) {
+        this->value_ = MIXED_TAINT;
+        this->data_ = tag.data_;
+        tag.data_ = nullptr;
+        tag.value_ = NOTAINT;
+    }
+    else {
+        this->value_ = tag.value_;
+        this->data_ = nullptr;
+        tag.data_ = nullptr;
+        tag.value_ = NOTAINT;
+    }
+}
+
+taint_tag& taint_tag::operator=(taint_tag &&other) {
+    if (this != &other) {
+        if (this->data_ != nullptr) {
+            delete this->data_;
+        }
+        if (other.size() > 1) {
+            this->value_ = MIXED_TAINT;
+            this->data_ = other.data_;
+            other.data_ = nullptr;
+            other.value_ = NOTAINT;
+        } else {
+            this->value_ = other.value_;
+            this->data_ = nullptr;
+            other.value_ = NOTAINT;
+            other.data_ = nullptr;
+        }
+    }
+    return *this;
+}
+
+taint_tag& taint_tag::operator=(const taint_tag & other) {
+    if (this != &other) {
+        if (this->data_ != nullptr) {
+            delete this->data_;
+        }
+        if (other.size() > 1) {
+            this->value_ = MIXED_TAINT;
+            this->data_ = new tag_set();
+            *this->data_ |= *other.data_;
+        } else {
+            this->value_ = other.value_;
+            this->data_ = nullptr;
+        }
+    }
+    return *this;
+}
+
+taint_tag::~taint_tag() {
+    if (this->data_ != nullptr) {
+        delete this->data_;
+        this->data_ = nullptr;
+    }
+}
+
+taint_tag::taint_tag(uint32_t value) {
+    this->value_ = value;
+    this->data_ = nullptr;
+}
+
+std::ostream & operator<<(std::ostream &strm, const taint_tag &tag) {
+    if (tag.empty()) {
+        strm << "{}";
+    } else if (tag.value_ == MIXED_TAINT) {
+        strm << *tag.data_;
+    } else {
+        strm << "{" << tag.value_ << "}";
+    }
+    return strm;
+}
+
+size_t taint_tag::size() const {
+    if (this->value_ == MIXED_TAINT) {
+        return MIXED_TAINT;
+    } else {
+        return this->value_ == NOTAINT ? 0 : 1;
+    }
+}
+
+bool taint_tag::empty() const {
+    return (this->value_ == NOTAINT);
+}
+
+
+taint_tag operator|(taint_tag left_tag, const taint_tag& tag) {
+    left_tag |= tag;
+    return left_tag;
+}
+
+taint_tag& taint_tag::operator|=(const taint_tag &tag) {
+    this->op_count++;
+    if (tag.value_ == NOTAINT) {
+        // nothing to do here
+    } else if (tag.value_ == MIXED_TAINT) {
+        if (this->value_ == MIXED_TAINT) {
+            *this->data_ |= *tag.data_;
+        } else {
+            this->data_ = new tag_set();
+            *this->data_ |= *tag.data_;
+            if (this->value_ != NOTAINT) {
+                this->data_->insert(this->value_);
+            }
+            this->value_ = MIXED_TAINT;
+        }
+    } else {
+        if (this->value_ == MIXED_TAINT) {
+            this->data_->insert(tag.value_);
+        } else if ((this->value_ == NOTAINT) || (this->value_ == tag.value_)) {
+            this->value_ = tag.value_;
+        } else {
+            this->data_ = new tag_set();
+            this->data_->insert(this->value_);
+            this->data_->insert(tag.value_);
+            this->value_ = MIXED_TAINT;
+        }
+    }
+    return *this;
+}
+
+
+uint64_t taint_tag::op_count = 0;
+\end{lstlisting}

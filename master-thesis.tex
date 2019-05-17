@@ -13,6 +13,42 @@
 %\usepackage{amssymb}
 %\usepackage{lscape}
 \usepackage{verbatim}
+\usepackage{caption}
+\usepackage{adjustbox}
+
+\usepackage{etoolbox}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{numprint}
+\usepackage{totcount,assoccnt}
+
+\newcounter{truechapters}
+\regtotcounter{truechapters}
+
+\newcounter{totalchapters}
+\newcounter{appendixchapters}
+\DeclareAssociatedCounters{chapter}{totalchapters,appendixchapters}
+\regtotcounter{totalchapters}
+\regtotcounter{appendixchapters}
+
+\preto\appendix{%
+  % save the number of true chapters
+  \setcounter{truechapters}{\value{chapter}}%
+  % reset the number of chapters
+  \setcounter{appendixchapters}{0}%
+}
+
+
+\newtotcounter[auxfile=totals.aux]{figurecnt}
+\newtotcounter[auxfile=totals.aux]{tablecnt}
+\newtotcounter[auxfile=totals.aux]{bibcnt}
+\def\oldbibitem{} \let\oldbibitem=\bibitem
+\def\bibitem{\stepcounter{bibcnt}\oldbibitem}
+\regtotcounter[auxfile=totals.aux]{page}
+
 % \newcommand{\No}{\textnumero}
 
 
@@ -165,9 +201,11 @@
 
 
 % \input{title.tex}
+\frontmatter
 \input{abstract.tex}
 \tableofcontents
 \input{intro.tex}
+\mainmatter
 \input{chapter1.tex}
 \input{chapter2.tex}
 \input{chapter3.tex}
@@ -186,6 +224,7 @@
 % \input{part1.tex}
 
 \input{conclusion.tex}
+\ma
 \input{appendix.tex}
 
 % \begin{appendices}
