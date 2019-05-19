@@ -4,6 +4,7 @@
 \usepackage[english,russian]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[titletoc]{appendix}
+\usepackage[usenames, dvipsnames]{xcolor}
 \usepackage{float}
 \usepackage{listings}
 \usepackage[ruled,vlined]{algorithm2e}
@@ -11,7 +12,8 @@
 \usepackage{graphicx}
 %\usepackage{amstext}
 %\usepackage{amssymb}
-%\usepackage{lscape}
+% \usepackage{lscape}
+% \usepackage{xcolor}
 \usepackage{verbatim}
 \usepackage{caption}
 \usepackage{adjustbox}
@@ -71,9 +73,7 @@
 
 % PDF search & cut'n'paste
 \usepackage{cmap}
-\usepackage{listings}
 \usepackage{url}
-\usepackage{color}
 \usepackage{textcomp}
 \usepackage[colorlinks]{hyperref}
 \hypersetup{
@@ -174,7 +174,7 @@
     basicstyle=\linespread{1.0}\ttfamily,
     keywordstyle=\color{blue}\ttfamily,
     stringstyle=\color{red}\ttfamily,
-    commentstyle=\color{olivegreen}\ttfamily,
+    commentstyle=\color{OliveGreen}\ttfamily,
     morecomment=[l][\color{magenta}]{\#}
     columns=fullflexible,
     postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
@@ -206,9 +206,9 @@
 \tableofcontents
 \input{intro.tex}
 \mainmatter
-\input{chapter1.tex}
 \input{chapter2.tex}
 \input{chapter3.tex}
+\input{chapter4.tex}
 % \input{report.tex}
 % \vbox{
 %     \centering
