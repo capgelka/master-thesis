@@ -43,9 +43,15 @@
   \setcounter{appendixchapters}{0}%
 }
 
+\newtotcounter{figurecnt}
+\def\oldfig{} \let\oldfig=\figure
+\def\figure{\stepcounter{figurecnt}\oldfig}
+%таблиц (only longtable)
+\newtotcounter{tablecnt}
+\def\oldtab{} \let\oldtab=\longtable
+\def\longtable{\stepcounter{tablecnt}\oldtab}
+% \def\table{\stepcounter{tablecnt}\oldtab}
 
-\newtotcounter[auxfile=totals.aux]{figurecnt}
-\newtotcounter[auxfile=totals.aux]{tablecnt}
 \newtotcounter[auxfile=totals.aux]{bibcnt}
 \def\oldbibitem{} \let\oldbibitem=\bibitem
 \def\bibitem{\stepcounter{bibcnt}\oldbibitem}
