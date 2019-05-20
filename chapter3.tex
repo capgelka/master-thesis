@@ -23,102 +23,156 @@
 
 Для возможности эффективной отладки и быстрого воспроизведения результатов экспериментов были также разработаны скрипты на языке \texttt{Python} для параллельного запуска инструмента на различных тестовых наборах, и для генерирования таблиц с результатами соответствующего запуска.
 
-В качестве тестового набора для сравнения использовались приложения из набора \texttt{LAVA} \cite{LAVA} и утилита \texttt{cmark}, используемая для преобразования markdown в html.
+В качестве тестового набора для сравнения использовались приложения из набора \texttt{LAVA} \cite{LAVA} и утилита \texttt{cmark}, используемая для преобразования markdown в html. И ранее упомянутая утилита  jumper, исходный код которой приведен в листинге ~\ref{lst:jumper}.
 
 % Мы просто описываем метрики, которые сняли тут, не углублясь в детали про Rust и сложности линковки?
 
 \section{Результаты сравнения}
 
-% \begin{table}[H]
-%     \caption{Время работы в секундах для различных реализаций} \label{tab:compare}
-%     \scalebox{0.8}{
-%     \begin{tabular}[]{@{}lllllllll@{}}
-%     \toprule
-%     & vanilla & vector & bitset6000 & roaring & bitset64 tree & bitset256
-%     tree & bitset512 tree & interval set \tabularnewline
-%     \midrule
-%     % \endhead
-%     cmark & 3.5s & 4.6s & 3.7s & 4.2s & 3.8s & 3.7s & 3.7s & 3.7s \tabularnewline
-%     file & 20.8s & 47s & 60s & 70s & 45.5s & 46s & 47s & 46s \tabularnewline
-%     libjpeg & 14.5s & 1762s & 49s & 378s & 307s & 108s & 80s & 165s \tabularnewline
-%     libyaml & 16.5s & 22.5s & 25s & 26s & 23.5s & 23.5s & 23.5s & 24s \tabularnewline
-%     \bottomrule
-% \end{tabular}}
-% \end{table}
 
-% \begin{table}[H]
-% \caption{Taintgrind} \label{tab:c1}
-% \scalebox{0.3}{
-% \begin{tabular}[]{@{}llllllll@{}}
-% \toprule
-% & Test name &
-% Suite &
-% Binary &
-% Size, KB &
-% Trace size &
-% Taken tainted branches &
-% Tainted branches &
-% Time, &
-% min:sec:ms &
-% Memory, MB \tabularnewline
-% \midrule
-% Grep & LAVA & 603 & 3227 & 29 & 62 & 0:04.57 & 155 \tabularnewline
-% Libyaml & LAVA & 427 & 3717 & 101 & 494 & 3:42.04 & 182 \tabularnewline
-% Pcre2grep & LAVA & 918 & 2689 & 42 & 111 & 0:10.30~ & 153 \tabularnewline
-% jq & LAVA & 2700 & 2421 & 27 & 78 & 0:31.64 & 124 \tabularnewline
-% Jpeg & LAVA & 1013 & 2282 & 169 & 305 & 31:34.51 & 1443 \tabularnewline
-% cmark & Real-world & 322 & 2497 & 111 & 266 & 0:24.28~ &
-% 152\tabularnewline
-% toy & LAVA & 17 & 1725 & 14 & 38 & 0:04.32 & 152 \tabularnewline
-% jumper & synthetic & 17 & 1575 & 7 & 12 & 0:04.17~ & 152 \tabularnewline
-% \bottomrule
-% \end{tabular}}
-% \end{table}
-
-\begin{longtable}[]{@{}llllllll@{}}
-\caption{Taintgrind} \label{tab:c1}\\
+\begin{longtable}[]{@{}llllll@{}}
+\caption{Результаты для Triton} \label{tab:triton}\\
 \toprule
 \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Test name\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Suite\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Binary
-
-Size, KB\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Trace size\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Taken tainted branches\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Tainted branches\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Time,
+\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Количество условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Выполненных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Помеченных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Время работы,
 
 min:sec:ms\strut
-\end{minipage} & \begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
-Memory, MB\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Используемая память, MB\strut
 \end{minipage}\tabularnewline
 \midrule
 \endhead
-Grep & LAVA & 603 & 3227 & 29 & 62 & 0:04.57 & 155\tabularnewline
-Libyaml & LAVA & 427 & 3717 & 101 & 494 & 3:42.04 & 182\tabularnewline
-Pcre2grep & LAVA & 918 & 2689 & 42 & 111 & 0:10.30~ & 153\tabularnewline
-jq & LAVA & 2700 & 2421 & 27 & 78 & 0:31.64 & 124\tabularnewline
-Jpeg & LAVA & 1013 & 2282 & 169 & 305 & 31:34.51 & 1443\tabularnewline
-cmark & Real-world & 322 & 2497 & 111 & 266 & 0:24.28~ &
-152\tabularnewline
-toy & LAVA & 17 & 1725 & 14 & 38 & 0:04.32 & 152\tabularnewline
-jumper & synthetic & 17 & 1575 & 7 & 12 & 0:04.17~ & 152\tabularnewline
+grep & 47093 & 24464 & 8226 & 1:24.47 & 1975\tabularnewline
+libyaml & 2037853 & 1177067 & 335785 & 39:55.45 &
+47915\tabularnewline
+pcre2grep & 51544 & 28501 & 11061 & 1:27.81 &
+1627\tabularnewline
+jpeg & 283884 & 225553 & 223853 & 34:25.76 &
+32902\tabularnewline
+cmark & 75766 & 31311 & 15677 & 1:30.86 &
+2120\tabularnewline
+toy & 14670 & 8573 & 30 & 0:18.45 & 383\tabularnewline
+jumper & 13879 & 8245 & 16 & 0:16.02 & 359\tabularnewline
 \bottomrule
 \end{longtable}
 
-Тут просто таблицы с комментариями.
 
-Непонятно как прокомментировать разницу в количестве инструкций, особенно когда в качестве DBI один и тот же инструмент - Pin.
+\begin{longtable}[]{@{}llllll@{}}
+\caption{Результаты для Taintgrind} \label{tab:taintgrind}\\
+\toprule
+\begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
+\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Количество условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Выполненных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Помеченных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Время работы,
+
+min:sec:ms\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Используемая память, MB\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+Grep &  3227 & 29 & 62 & 0:04.57 & 155\tabularnewline
+Libyaml &  3717 & 101 & 494 & 3:42.04 & 182\tabularnewline
+Pcre2grep &  2689 & 42 & 111 & 0:10.30~ & 153\tabularnewline
+jq & 2421 & 27 & 78 & 0:31.64 & 124\tabularnewline
+Jpeg & 2282 & 169 & 305 & 31:34.51 & 1443\tabularnewline
+cmark & 2497 & 111 & 266 & 0:24.28~ &
+152\tabularnewline
+toy & 1725 & 14 & 38 & 0:04.32 & 152\tabularnewline
+jumper & 1575 & 7 & 12 & 0:04.17~ & 152\tabularnewline
+\bottomrule
+\end{longtable}
+
+
+
+\begin{longtable}[]{@{}llllll@{}}
+\caption{Результаты для libdft64} \label{tab:libdft}\\
+\toprule
+\begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
+\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Количество условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Выполненных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Помеченных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Время работы,
+
+min:sec:ms\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Используемая память, MB\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+grep & 4167 & 375 & 178 & 0:05.94 & 496\tabularnewline
+libyaml & 4206 & 395 & 520 & 0:30.13 & 231\tabularnewline
+pcre2grep & 3346 & 328 & 872 & 0:04.75 & 230\tabularnewline
+jpeg & 2266 & 174 & 291 & 0:03.15 & 230\tabularnewline
+cmark & 2997 & 297 & 340 & 0:04.54 & 231\tabularnewline
+toy  & 2131 & 193 & 182 & 0:02.84 & 226\tabularnewline
+jumper & 1920 & 175 & 181 & 0:02.55 & 226\tabularnewline
+\bottomrule
+\end{longtable}
+
+
+\begin{longtable}[]{@{}llllll@{}}
+\caption{Результаты для moflow gentrace} \label{tab:moflow}\\
+\toprule
+\begin{minipage}[b]{0.12\columnwidth}\raggedright\strut
+\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Количество условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Выполненных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Помеченных условных переходов\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Время работы,
+
+min:sec:ms\strut
+\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedright\strut
+Используемая память, MB\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+grep & 975 & 287 & 24 & 0:02.17 & 44\tabularnewline
+libyaml & 3415652 & 1152692 & 926490 & 0:47.53 &
+518\tabularnewline
+pcre2grep & 53655 & 16224 & 12366 & 0:13.29 &
+492\tabularnewline
+jpeg & 486365 & 218363 & 460995 & 1:29.91 &
+494\tabularnewline
+cmark & 101065 & 21379 & 37880 & 0:12.15 &
+489\tabularnewline
+toy & 2166 & 574 & 1723 & 0:07.25 & 338\tabularnewline
+jumper & 796 & 210 & 23 & 0:03.72 & 42\tabularnewline
+\bottomrule
+\end{longtable}
+
+
+% Тут просто таблицы с комментариями.
+
+% Непонятно как прокомментировать разницу в количестве инструкций, особенно когда в качестве DBI один и тот же инструмент - Pin.
 
 \section{Выбор moflow}
 
-В результате качественного сравнения инструментов, проделанного в обзоре и количественного в предыдущем пункте, было принято решение выбрать в качестве базы для дальнейшей работы \texttt{moflow gentrace}, как быстрый инструмент, поддерживающий байтовую гранулярность меток, отслеживание помеченности регистра флагов и распространение пометок для всех x86-64 инструкций.
+Разница в размере трасс объясняется разных подходом к инструментации. Можно видеть, что только два инструмента работают за приемлимое время - это \texttt{moflow gentrace} и \texttt{libdft64}. Однако в \texttt{libdft64} отсутствует поддержка SSE инструкций, что является критичным требованием, поскольку такие инструкции присутсвуют практически во всех достаточно больших приложениях, собранных современным компилятором.\footnote{В частности в cmark и примерах из набора LAVA}
+
+Таким образом, в результате качественного сравнения инструментов, проделанного в обзоре и количественного в предыдущем пункте, было принято решение выбрать в качестве базы для дальнейшей работы \texttt{moflow gentrace}, как быстрый инструмент, поддерживающий байтовую гранулярность меток, отслеживание помеченности регистра флагов и распространение пометок для всех x86-64 инструкций.
 
 % libdft не работал и нет поддержки регистра флагов, triton медленный, taintgrind с ``плохим кодом''?
