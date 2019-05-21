@@ -197,13 +197,8 @@ class Explorer(object):
         )
 
     def search_for(self, addr):
-        self.sm.explore(find=addr)
-        # try:
         return self.sm.found[0]
-        # except:
-        #     import ipdb
-        #     ipdb.set_trace()
-
+        
     def get_constraints(self, state):
         return state.solver.constraints
 
