@@ -88,12 +88,13 @@
 \definecolor{Blue2}{HTML}{9ccff0}
 \setbeamercolor{block title}{bg=Blue2}
 
-\title{Магистерская диссертация на тему}
+\title{Магистерская диссертация}
 \subtitle{Исследование и разработка методов динамического анализа для определения входных данных влияющих на выполнение условных переходов}
-\author{Дьячков Л.А.\\[10mm]{\small Руководитель: к.ф-м.н, с.н.с. Курмангалеев Ш.Ф.}}
-% \author{}
+\author{Дьячков Л.А.\\[3mm]{\small Руководитель: д.ф-м.н, профессор. Петренко А.К.}\\[1mm]
+{\small Cоруководитель: к.ф-м.н, с.н.с. Курмангалеев Ш.Ф.}\\[3mm]
+}
 \institute{ИСП РАН}
-\date{5 Апрeля 2019}
+\date{17 Июня 2019}
 \titlegraphic{\hfill\includegraphics[height=0.5cm]{logo_isp_ru.png}}
 
 \begin{document}
@@ -222,7 +223,7 @@
 
       \begin{block}{Недостатки}
           \begin{itemize}
-      \item Работает крайне медленно (примерно на два порядка медленее других инструментов на базе pin)
+      \item Работает на два порядка медленее других инструментов на базе pin
       \item Нет поддержки символьных файлов/пометки данных на основе системных вызовов
       \item Грубый модуль пометки данных, низкая гранулярность over-approximation
       \end{itemize}
@@ -277,7 +278,7 @@
 
 
 \begin{frame}{Manticore}
-    Аналог Angr, поддерживающий также смарт-контракты. использует эмуляцию инструкций.
+    Аналог Angr, поддерживающий также анализ смарт-контрактов для Ethereum. использует эмуляцию инструкций.
     \begin{block}{Достоинства}
       \begin{itemize}
         \item Поддерживает offline режим % на самом деле нет
@@ -285,7 +286,7 @@
     \end{block}
         \begin{block}{Недостатки}
           \begin{itemize}
-      \item Медленно работает (около 50 секунд эмуляции для того, чтобы дойти до main в программе с glibc)
+      \item Низкая производительность (требуется 50 секунд эмуляции для того, чтобы дойти до main в программе с glibc)
       \item Нет поддержки SSE инструкций
       \item Нет поддержки некоторых системных вызовов при эмуляции
       \end{itemize}
@@ -303,7 +304,7 @@
     \end{block}
         \begin{block}{Недостатки}
           \begin{itemize}
-      \item Низкий уровень гранулярности пометок
+      \item Отслеживает только сам факт помеченности данных, нет возможности различать источники
       \end{itemize}
     \end{block}
 \end{frame}
@@ -346,23 +347,28 @@
 \begin{frame}{Метод на основе символьного выполнения}
 
 Каждому байту входного файла ставится в соответствие символьная переменная.
-Для каждого предиката пути выполняется следующий алгоритм
+При добавлении на очередном условном переходе в предикат пути новой формулы, для неё выполняется следующий алгоритм
 
 \begin{algorithm}[H]
 \SetAlgoLined
 \KwIn{Предикат пути, представленный в виде AST для SMT формулы}
 \KwOut{Список символьных переменных}
 \SetKwFunction{getleafs}{\textbf{GetLeafs}}
-\SetKwFunction{isleaf}{\textbf{IsLeaf}}
+\SetKwFunction{issymvar}{\textbf{IsSymVar}}
+\SetKwFunction{isconstant}{\textbf{IsConstant}}
+\SetKw{continue}{\textbf{continue}}
 % \Indm\nonl\printlcs{$V$}\\
 % \KwResult{Write here the result
 \SetKwProg{Fn}{Function}{:}{}
 \Fn{\getleafs{$V$}}{
 $Found \gets \emptyset$\;
   \For{$child \in V$} {
-    \If{$\isleaf ( child ) $} {
+    \If{$\issymvar ( child ) $} {
         $Found \gets Found \cup \{ child \}$\;
-    } \Else {
+    } \ElseIf{$\isconstant ( child ) $} {
+        $\continue$\;
+    }
+    \Else {
       $Found \gets Found \cup \getleafs{child}$\;
     }
   }
@@ -378,11 +384,11 @@ $Found \gets \emptyset$\;
 
 \begin{block}{Достоинства}
   \begin{itemize}
-    \item Простой и естественный алгоритм
+    \item Простой в реализации алгоритм
     \item Высокая точность работы
   \end{itemize}
 \end{block}
-
+\pause
 \begin{block}{Недостатки}
   \begin{itemize}
     \item Низкая производительность (Построение формул на каждую инструкцию)
@@ -461,7 +467,7 @@ $Found \gets \emptyset$\;
 
 \end{frame}
 
-\begin{frame}[fragile]{ Доработки Moflow}
+\begin{frame}[fragile]{Доработки Moflow}
     \textbf{0x5678fff0} и \textbf{0x5678fff1} помечаются $8$ тэгами. Правильно было бы представить \textbf{RCX} как 8 отдельных байт, которые могут быть помечены независимо, тогда \textbf{0x5678fff0} и \textbf{0x5678fff1} будут помечены $2$ различными тегами.
     \scalebox{0.25}{\includegraphics{../../img/propagation2.png}}
 
@@ -472,7 +478,7 @@ $Found \gets \emptyset$\;
     
     \textbf{Множество пометок} -- структура для поддержки множественных пометок, от неё требуется поддержка следующих операций
     \begin{itemize}
-        \item Добавление \textbf{пометки в множество}.
+        \item Добавление \textbf{метки в множество}.
         \item Объединение с другим \textbf{Множеством пометок}
         \item Вывод содержимого \textbf{Множества пометок}
      \end{itemize}
