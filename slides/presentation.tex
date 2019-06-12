@@ -452,7 +452,7 @@ $Found \gets \emptyset$\;
 
 \begin{frame}[fragile]{Как работает Moflow}
 
-    \scalebox{0.3}{\includegraphics{../../img/source_tainting.png}}
+    \scalebox{0.3}{\includegraphics{../img/source_tainting.png}}
 
 \end{frame}
 
@@ -463,13 +463,13 @@ $Found \gets \emptyset$\;
     \textbf{RCX} помечен $8$ тегами. Moflow бы пометил бы
     \textbf{RCX} как \textbf{MIXED\_TAINT}, для реализации множественного помечивания нужна  структура \textbf{Множество пометок}.
 
-    \scalebox{0.3}{\includegraphics{../../img/propagation1.png}}
+    \scalebox{0.3}{\includegraphics{../img/propagation1.png}}
 
 \end{frame}
 
 \begin{frame}[fragile]{Доработки Moflow}
     \textbf{0x5678fff0} и \textbf{0x5678fff1} помечаются $8$ тэгами. Правильно было бы представить \textbf{RCX} как 8 отдельных байт, которые могут быть помечены независимо, тогда \textbf{0x5678fff0} и \textbf{0x5678fff1} будут помечены $2$ различными тегами.
-    \scalebox{0.25}{\includegraphics{../../img/propagation2.png}}
+    \scalebox{0.25}{\includegraphics{../img/propagation2.png}}
 
 \end{frame}
 
