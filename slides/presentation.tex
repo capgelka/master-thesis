@@ -9,6 +9,7 @@
 ]{metropolis}
 \usepackage{appendixnumberbeamer}
 
+\usepackage{numprint}
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
 
@@ -123,22 +124,30 @@
 
 \begin{frame}{Постановка задачи}
 
-  \begin{block}{Цель работы}
-    \begin{itemize}
-    \item Разработка метода динамического анализа, позволяющего определять байты входного файла, влияющего на выполнение инструкции условного перехода.
-    \item Программная реализация метода, работающая на операционной системе Linux с архитектурой процессора x86-64
-    \end{itemize}
-  \end{block}
-  \pause
+Цели работы
+\begin{itemize}
+    \item Исследовать методы динамического анализа с целью выявления подходов, применимых к задаче определения входных данных, влияющищих на выполнение условных переходов.
+    \item Провести анализ существующих инструментов динамического анализа с точки зрения применимости к решаемой задаче.
+    \item Разработать методы определения входных данных, влияющих на выполнение условных переходов на основе динамического символьного выполнения и на основе динамического анализа помеченных данных.
+    \item Привести программную реализацию разработанных методов, провести её тестирование на наборе \texttt{LAVA} и программах с открытым исходным кодом.
+\end{itemize}
 
-  \begin{block}{Подзадачи}
-    \begin{itemize}
-      \item Изучение существующих технологий динамического символьного выполнение и динамического анализа потока данных.
-      \item Сравнение технологий на тестовом наборе
-      \item Обзор возможных подходов, реализация прототипов, разработка метода
-      \item Программная реализация на основе выбранной технологии
-    \end{itemize}
-  \end{block}
+  % \begin{block}{Цель работы}
+  %   \begin{itemize}
+  %   \item Разработка метода динамического анализа, позволяющего определять байты входного файла, влияющего на выполнение инструкции условного перехода.
+  %   \item Программная реализация метода, работающая на операционной системе Linux с архитектурой процессора x86-64
+  %   \end{itemize}
+  % \end{block}
+  % \pause
+
+  % \begin{block}{Подзадачи}
+  %   \begin{itemize}
+  %     \item Изучение существующих технологий динамического символьного выполнение и динамического анализа потока данных.
+  %     \item Сравнение технологий на тестовом наборе
+  %     \item Обзор возможных подходов, реализация прототипов, разработка метода
+  %     \item Программная реализация на основе выбранной технологии
+  %   \end{itemize}
+  % \end{block}
 
     % \textbf{Задача} Для сравнения инструментов использовать существующию инфраструктуру Google OSS-fuzz \\
     % \textbf{Результаты}
@@ -382,37 +391,20 @@ $Found \gets \emptyset$\;
 
 \begin{frame}{Метод на основе символьного выполнения}
 
-\begin{block}{Достоинства}
-  \begin{itemize}
-    \item Простой в реализации алгоритм
-    \item Высокая точность работы
-  \end{itemize}
-\end{block}
-\pause
-\begin{block}{Недостатки}
-  \begin{itemize}
-    \item Низкая производительность (Построение формул на каждую инструкцию)
-    \item Ни один из расмотренных DSE инструментов не позволяет реализовать метод, работающий на несинтетических примерах без ощутимых доработок самого инструмента
-  \end{itemize}
-\end{block}
-
-\end{frame}
-
-\begin{frame}{Метод на основе символьного выполнения}
-
-\begin{block}{Достоинства}
-  \begin{itemize}
-    \item Простой и естественный алгоритм
-    \item Высокая точность работы
-  \end{itemize}
-\end{block}
-\pause
+  \begin{block}{Достоинства}
+    \begin{itemize}
+      \item Простой в реализации алгоритм
+      \item Высокая точность работы
+    \end{itemize}
+  \end{block}
+  \pause
   \begin{block}{Недостатки}
     \begin{itemize}
       \item Низкая производительность (Построение формул на каждую инструкцию)
       \item Ни один из расмотренных DSE инструментов не позволяет реализовать метод, работающий на несинтетических примерах без ощутимых доработок самого инструмента
     \end{itemize}
   \end{block}
+
 \end{frame}
 
 
@@ -482,42 +474,134 @@ $Found \gets \emptyset$\;
         \item Объединение с другим \textbf{Множеством пометок}
         \item Вывод содержимого \textbf{Множества пометок}
      \end{itemize}
-     \pause
-     Было разработано несколько подходов к реализации структуры.
+     % \pause
+     % Было разработано несколько подходов к реализации структуры.
 
 \end{frame}
+
+\begin{frame}{Доработки Moflow | Множество пометок | Различные реализации }
+    \begin{itemize}
+
+        \item Динамический массив (\texttt{std::vector}).
+        \item Битовое множество (\texttt{std::bitset})
+        \item Cжатовое битовое множество (\texttt{Croaring})
+        \item Ассоциативный массив из битовых множеств (\texttt{std::map} из стандартной библиотеки, ключами которого являются целые числа, а значениями битовые вектора размера $N$)
+        \item Множество интервалов \texttt{boost::icl::interval\_set}
+     \end{itemize}
+     \pause
+       Поскольку не менее 70\% операций объединения проводится над пустыми множествами и множествами из $1$ элемента, во всех случаях множество пометок было реализовано как пара из \textbf{uint32\_t} и указателя на более сложную структуру (который в этих 70\% оказывается нулевым).
+
+\end{frame}
+
+% \begin{frame}{Доработки Moflow | Множество пометок | Тестовые примеры}
+% \begin{itemize}
+%     \item \texttt{cmark} -- программа для преобразования markdown в html, написанная на \texttt{C}, входной файл из $3379$ байт, количество инструкций в трассе \numprint{608398}, количество операций над множествами меток \numprint{205273}.
+%     \item \texttt{file} -- инструмент из набора GNU, coreutils, определяющий тип файла, входной файл содержит строку \texttt{``1123235235346436\textbackslash n''}, количество инструкций в трассе \numprint{14343775}, количество операций над множествами меток \numprint{23494644}.
+%     \item \texttt{jpeg} -- программа из набора \texttt{LAVA}  для обработки jpeg файлов, входной файл из $5770$ байт, количество инструкций в трассе \numprint{9043561}, количество операций над множествами меток \numprint{55839222}.
+%     \item \texttt{libyaml} -- программа из набора \texttt{LAVA} для обработки yaml файлов, входной файл из $5242$ байт, количество инструкций в трассе \numprint{11580028}, количество операций над множествами меток \numprint{11157748}
+% \end{itemize}
+% \end{frame}
 
 \begin{frame}{Доработки Moflow | Множество пометок}
 
     \textbf{Время работы в секундах для различных реализаций}\\
-    \scalebox{0.75}{
-    \begin{tabular}[]{@{}llllllll@{}}
+    \scalebox{0.65}{
+    \begin{tabular}[]{@{}lllllllll@{}}
     \toprule
     & vanilla & vector & bitset6000 & roaring & bitset64 tree & bitset256
-    tree & bitset512 tree\tabularnewline
+    tree & bitset512 tree & interval set \tabularnewline
     \midrule
     % \endhead
-    cmark & 3.5s & 4.6s & 3.7s & 4.2s & 3.8s & 3.7s & 3.7s\tabularnewline
-    file & 20.8s & 47s & 60s & 70s & 45.5s & 46.3s & 47.5s\tabularnewline
-    libjpeg & 14.5s & 1762s & 49s & 378s & 307s & 108s & 80s\tabularnewline
-    libyaml & 16.5s & 22.5s & 25s & 26s & 23.5s & 23.5s & 23.5s\tabularnewline
+    cmark & 3.5s & 4.6s & 3.7s & 4.2s & 3.8s & 3.7s & 3.7s & 3.7s \tabularnewline
+    file & 20.8s & 47s & 60s & 70s & 45.5s & 46s & 47s & 46s \tabularnewline
+    libjpeg & 14.5s & 1762s & 49s & 378s & 307s & 108s & 80s & 165s \tabularnewline
+    libyaml & 16.5s & 22.5s & 25s & 26s & 23.5s & 23.5s & 23.5s & 24s \tabularnewline
     \bottomrule
 \end{tabular}}
 \end{frame}
 
+\begin{frame}{Доработки Moflow | Другие доработки | удаление ненужного функционала}
 
-\begin{frame}{Доработки Moflow | Множество пометок | Комментарии }
-
+Целью изначального инструмента было сохранение трасс выполнения в формате \texttt{protobuf}, однако с точки зрения решаемой задачи в этом нет никакого необходимости.
+\pause
+\begin{table}[H]
+    \centering
+    \caption{Время работы с сериализацией и без} \label{tab:compare2}
+    % \scalebox{0.4}{
+    \begin{tabular}[]{@{}lll@{}}
+    \toprule
+    & с сериализацией трассы & без сериализации трассы  \tabularnewline
+    \midrule
+    % \endhead
+    cmark & 3.7s & 3.4s \tabularnewline
+    file & 46s & 29s \tabularnewline
+    libjpeg & 108s & 99s \tabularnewline
+    libyaml & 23.5s & 22s \tabularnewline
+    \bottomrule
+\end{tabular}
+\end{table}
+\pause
 \begin{itemize}
-  \item Поскольку не менее 70\% операций объединения проводится над пустыми множествами и множествами из $1$ элемента, во всех случаях множество пометок было реализовано как пара из \textbf{uint32\_t} и указателя на более сложную структуру (который в этих 70\% оказывается нулевым).
-  \item Обычные \textbf{std::set} и \textbf{std::unordered\_set} оказались заметно медленее приведенных реализаций, и в таблицу не сключены.
-  \item Roaring (https://github.com/RoaringBitmap/CRoaring) -- библиотека сжатых битовых векторов.
-\item Bitset -- реализация на основе \textbf{std::bitset}, $6000$ битов достаточно для всех примеров из тествого набора. Размер битового множества должен быть известенна этапе компиляции.
-\item \textbf{bitset64 tree} и \textbf{bitset256 tree} реализации, в которых \textbf{Множество пометок} представлено как a \textbf{std::map} с целочисленными ключами и \textbf{std::bitset} размеров $64$ и $256$ в качестве значений.
-\end{itemize}
+\item производительность возрасла
+\item возможность использовать версию \texttt{Pin 3.7} по причине отсутствия внешних зависимостей.
+  \end{itemize}
+
 \end{frame}
 
+\begin{frame}{Доработки Moflow | Другие доработки | Задание гранулярности меток}
+\textbf{afl-analyze} --- инструмент, позволяюший определять контрольные суммы и магические значения во входных файлах.
+\pause
+\begin{figure}[H]
+    \center{
+        \includegraphics[scale=0.3]{../img/granularity.png}
+    }
+\end{figure}
+Данные, для которых \texttt{afl-analyze} не смог определить семантику помечаются обычным образом.
+\end{frame}
 
-\appendix
+\begin{frame}{Пример интеграции с фаззером}
+\begin{figure}[H]
+    \center{
+        \includegraphics[scale=0.3]{../img/high_freq.png}
+    }
+    \caption{Оригинальный \texttt{AFL}}
+\end{figure}
+\begin{figure}[H]
+    \center{
+        \includegraphics[scale=0.3]{../img/high_freq_moflow.png}
+    }
+      \caption{\texttt{AFL} используюший \texttt{moflow gentrace}}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Пример интеграции с фаззером}
+\begin{figure}[H]
+    \center{
+        \includegraphics[scale=0.3]{../img/low_freq.png}
+    }
+    \caption{Оригинальный \texttt{AFL}}
+\end{figure}
+\begin{figure}[H]
+    \center{
+        \includegraphics[scale=0.3]{../img/low_freq_moflow.png}
+    }
+      \caption{\texttt{AFL} используюший \texttt{moflow gentrace}}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Заключение}
+
+\begin{itemize}
+\item Выявлены два подхода на основе динамического анализа, позволяюшие определять входные данные влияющие на выполнения услоаных переходов
+\item Предложены методы на основе динамического символьного анализа и динамического анализа помеченных данных.
+\item Методы программно реализованы на инструментах \textbf{Angr} и \textbf{Moflow gentrace}.
+\item Реализованные решение протестированы на тестовом наборе \textbf{LAVA} и приложениях с открытым исходным кодом
+\end{itemize}
+
+
+\end{frame}
+
 %\begin{frame}[standout] \vfill Thanks for attention \vfill \end{frame}
 \end{document}
